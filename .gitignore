@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+# InsightFace model pack (downloaded at first start, never source code)
+.models/
+data/
+*.log

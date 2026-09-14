@@ -1,0 +1,8 @@
+# Runtime shared by both builds. The ONNX Runtime flavour is NOT pinned here:
+# the GPU image installs requirements-gpu.txt, local/CPU runs requirements-cpu.txt.
+fastapi==0.116.1
+insightface==0.7.3
+numpy==1.26.4
+opencv-python-headless==4.11.0.86
+python-multipart==0.0.20
+uvicorn[standard]==0.35.0

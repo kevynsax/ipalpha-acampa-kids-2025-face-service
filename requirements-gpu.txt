@@ -1,0 +1,3 @@
+-r requirements.txt
+# CUDA build — only has linux x86_64 / aarch64 wheels (the production image).
+onnxruntime-gpu==1.22.0
