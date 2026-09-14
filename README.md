@@ -39,13 +39,13 @@ no state. Thresholding and matching live in the backend.
 | `FACE_DET_SIZE` | `640` | detector input edge |
 | `FACE_MAX_BYTES` | `8388608` | request size guard |
 
-## Run it locally (Docker, CPU)
+## Run it locally (Docker)
 
-`Dockerfile` is the CUDA production image; `Dockerfile.cpu` is the same code on
-CPU-only ONNX Runtime and builds on an arm64 Mac.
+`Dockerfile` is the CPU-only build — what CI builds and what production runs;
+it works on an arm64 Mac too. `Dockerfile.gpu` is the CUDA variant.
 
 ```bash
-docker build -f Dockerfile.cpu -t acampa-face:cpu .
+docker build -t acampa-face:cpu .
 docker run --rm -p 8000:8000 -v "$PWD/.models:/app/data/insightface" acampa-face:cpu
 ```
 
@@ -69,15 +69,21 @@ FACE_MODEL_ROOT=.models uvicorn face_service.app:app --port 8000
 
 ## Deployment
 
-Published by the parent `camping/` folder's `./publish` (repo
-`ipalpha-acampa-kids-2025-face-service`, image
-`ip-alpha/kids/acampa-2025-face`), manifest
-`k8s/ipalpha/kids/acampa-2025/face-service.yaml`. The version lives in
-`face_service/version.py`.
+| | |
+|---|---|
+| Repo | `kevynsax/ipalpha-acampa-kids-2025-face-service` |
+| CI | TeamCity `IpAlpha_Kids_Acampa2025FaceService_Build` — VCS trigger on every push to `master`; reads the version, refuses to rebuild an existing tag, builds and pushes |
+| Image | `registry.kevyn.com.br/ip-alpha/kids/acampa-2025-face:<version>` |
+| Manifest | `k8s/ipalpha/kids/acampa-2025/face-service.yaml` (namespace `ipalpha-kids`) |
+| Version | `face_service/version.py` — bumped by the parent folder's `./publish` |
 
-The GPU variant asks for one time-sliced `nvidia.com/gpu`; dropping that limit
-and `runtimeClassName: nvidia` falls back to CPU (seconds per photo instead of
-fractions).
+Production runs the **CPU** image: ~1 s per photo, and indexing happens in the
+background after upload, so a GPU buys nothing for a camp-sized album. To move
+to the GPU later: build `Dockerfile.gpu`, then add `runtimeClassName: nvidia`
+and a `nvidia.com/gpu: "1"` limit to the deployment.
+
+The model pack lives on a PVC (`/mnt/k8s-data/ipalpha/kids/acampa-2025/face-models`)
+so restarts do not re-download it.
 
 > Face embeddings of children are biometric data. Keep this service
 > cluster-internal — never behind a public ingress.
